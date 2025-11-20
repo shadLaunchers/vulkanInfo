@@ -1,0 +1,8 @@
+[submodule "externals/ext-volk"]
+	path = externals/ext-volk
+	url = https://github.com/zeux/volk.git
+	branch = master
+[submodule "externals/ext-Vulkan-Headers"]
+	path = externals/ext-Vulkan-Headers
+	url = https://github.com/KhronosGroup/Vulkan-Headers.git
+	branch = main
