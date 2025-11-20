@@ -7,40 +7,53 @@ project(VulkanDeviceLibProject LANGUAGES C CXX)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-# Force absolute paths to avoid relative path issues
+# Absolute paths
 set(SRC_DIR "${CMAKE_CURRENT_SOURCE_DIR}/src")
 set(EXTERNALS_DIR "${CMAKE_CURRENT_SOURCE_DIR}/externals")
 
-# Build external dependencies (Volk + Vulkan-Headers)
+option(USE_SHARED_LIBS "Build VulkanDeviceLib as a shared library" OFF)
+
+if(USE_SHARED_LIBS)
+    set(LIB_TYPE SHARED)
+else()
+    set(LIB_TYPE STATIC)
+endif()
+
+message(STATUS "VulkanDeviceLib will be built as: ${LIB_TYPE}")
+
+# Force externals to build static libraries if VulkanDeviceLib is static
+if(NOT USE_SHARED_LIBS)
+    set(BUILD_SHARED_LIBS OFF CACHE BOOL "Force externals static" FORCE)
+endif()
+
 add_subdirectory("${EXTERNALS_DIR}")
 
-# Build the DLL
-add_library(VulkanDeviceLib SHARED
+add_library(VulkanDeviceLib ${LIB_TYPE}
     "${SRC_DIR}/VulkanDeviceLib.cpp"
 )
 
 # Include headers
 target_include_directories(VulkanDeviceLib
-    PUBLIC
-        "${SRC_DIR}"
+    PUBLIC "${SRC_DIR}"
 )
 
-# Link external libraries
+# Link Volk and Vulkan-Headers
 target_link_libraries(VulkanDeviceLib
-    PRIVATE
-        volk
-        Vulkan::Headers
+    PRIVATE volk
+            Vulkan::Headers
 )
 
-# Export macro for Windows DLL
-target_compile_definitions(VulkanDeviceLib PRIVATE VULKAN_DEVICE_LIB_EXPORTS)
-
-# Windows: remove "lib" prefix
-if(WIN32)
+# Windows: handle dllexport/dllimport for shared builds
+if(WIN32 AND USE_SHARED_LIBS)
+    target_compile_definitions(VulkanDeviceLib PRIVATE VULKAN_DEVICE_LIB_EXPORTS)
     set_target_properties(VulkanDeviceLib PROPERTIES PREFIX "")
 endif()
 
-# Installation
+# Position-independent code for static libraries
+if(NOT USE_SHARED_LIBS)
+    set_target_properties(VulkanDeviceLib PROPERTIES POSITION_INDEPENDENT_CODE ON)
+endif()
+
 install(TARGETS VulkanDeviceLib
         RUNTIME DESTINATION bin
         LIBRARY DESTINATION lib

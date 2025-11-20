@@ -5,12 +5,16 @@
 
 #include <stddef.h>
 
-#if defined(_WIN32) && defined(VULKAN_DEVICE_LIB_EXPORTS)
-#   define VDL_API __declspec(dllexport)
-#elif defined(_WIN32)
-#   define VDL_API __declspec(dllimport)
+#if defined(_WIN32)
+#  if defined(VULKAN_DEVICE_LIB_EXPORTS)
+#    define VDL_API __declspec(dllexport)
+#  elif defined(VULKAN_DEVICE_LIB_IMPORTS)
+#    define VDL_API __declspec(dllimport)
+#  else
+#    define VDL_API
+#  endif
 #else
-#   define VDL_API
+#  define VDL_API
 #endif
 
 #ifdef __cplusplus
